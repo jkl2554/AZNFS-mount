@@ -43,8 +43,3 @@ fi
 systemctl stop aznfswatchdog
 systemctl disable aznfswatchdog
 echo "Stopped aznfswatchdog service."
-
-# Stop azfilenfs-watchdog service and clean it.
-systemctl stop azfilenfs-watchdog
-systemctl disable azfilenfs-watchdog
-echo "Stopped azfilenfs-watchdog service."

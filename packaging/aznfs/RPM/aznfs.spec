@@ -19,8 +19,6 @@ tar -xzvf ${STG_DIR}/AZNFS_PACKAGE_NAME-${RELEASE_NUMBER}-1.x86_64.tar.gz -C ${S
 /opt/microsoft/aznfs/common.sh
 /opt/microsoft/aznfs/mountscript.sh
 /lib/systemd/system/aznfswatchdog.service
-/usr/sbin/azfilenfs-watchdog
-/lib/systemd/system/azfilenfs-watchdog.service
 
 %pre
 init="$(ps -q 1 -o comm=)"
@@ -42,7 +40,6 @@ chmod 0755 /opt/microsoft/aznfs/
 chmod 0755 /usr/sbin/aznfswatchdog
 chmod 0755 /opt/microsoft/aznfs/mountscript.sh
 chmod 0644 /opt/microsoft/aznfs/common.sh
-chmod 0755 /usr/sbin/azfilenfs-watchdog
 
 # Set suid bit for mount.aznfs to allow mount for non-super user.
 chmod 4755 /sbin/mount.aznfs
@@ -68,10 +65,6 @@ chattr +i /opt/microsoft/aznfs/randbytes
 systemctl daemon-reload
 systemctl enable aznfswatchdog
 systemctl start aznfswatchdog
-
-# Start azfilenfs-watchdog service.
-systemctl enable azfilenfs-watchdog
-systemctl start azfilenfs-watchdog
 
 if [ "DISTRO" != "suse" -a ! -f /etc/centos-release ]; then
 	echo 	
@@ -138,11 +131,6 @@ if [ $1 == 0 ]; then
 	systemctl stop aznfswatchdog
 	systemctl disable aznfswatchdog
 	echo "Stopped aznfswatchdog service."
-
-        # Stop azfilenfs-watchdog in case of removing the package.
-        systemctl stop azfilenfs-watchdog
-        systemctl disable azfilenfs-watchdog
-        echo "Stopped azfilenfs-watchdog service."
 fi
 
 %postun
