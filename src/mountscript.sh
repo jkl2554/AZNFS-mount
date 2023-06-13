@@ -639,30 +639,6 @@ ensure_aznfswatchdog()
     fi
 }
 
-#
-# Ensure azfilenfs-watchdog service is running, if not bail out with an appropriate
-# error.
-#
-ensure_azfilenfs-watchdog()
-{
-    watchdogRunningCounter=0
-    watchdogRunningLimit=5
-    while ! systemctl is-active --quiet azfilenfs-watchdog
-    do
-        if [ $watchdogRunningCounter -lt $watchdogRunningLimit ]; then
-	    # systemd restarts azfilenfs-watchdog after 5 secs.
-	    # So we will wait for 5 secs and recheck if azfilenfs-watchdog has restarted. 
-	    sleep $AZFILENFS_WATCHDOG_INTERVAL_SECS
-	    watchdogRunningCounter=$(( watchdogRunningCounter+1 ))
-        else
-            eecho "azfilenfs-watchdog service not running!"
-            pecho "Start the azfilenfs-watchdog service using 'systemctl start azfilenfs-watchdog' and try again."
-            pecho "If the problem persists, contact Microsoft support."
-            return 1
-        fi
-    done
-}
-
 find_next_available_port_and_start_stunnel()
 {
     while true
@@ -960,6 +936,11 @@ tls_nfsv4_files_share_mount()
 # [account.blob.core.windows.net:/account/container /mnt/aznfs -o rw,tcp,nolock,nconnect=16]
 vecho "Got arguments: [$*]"
 
+# Check if aznfswatchdog service is running.
+if ! ensure_aznfswatchdog; then
+    exit 1
+fi
+
 mount_point="$2"
 
 OPTIONS=
@@ -1010,12 +991,7 @@ fi
 if [ "$nfs_vers" == "4.1" ]; then
     vecho "nfs_host=[$nfs_host], nfs_dir=[$nfs_dir], mount_point=[$mount_point], options=[$OPTIONS], mount_options=[$MOUNT_OPTIONS]."
 
-    # Check if azfilenfs-watchdog service is running.
-    if ! ensure_azfilenfs-watchdog; then
-        exit 1
-    fi
-
-    # AZ_FILES_MOUNTMAP file must have been created by azfilenfs-watchdog service.
+    # AZ_FILES_MOUNTMAP file must have been created by aznfswatchdog service.
     if [ ! -f $AZ_FILES_MOUNTMAP ]; then
         touch $AZ_FILES_MOUNTMAP
 	if [ $? -ne 0 ]; then
@@ -1061,11 +1037,6 @@ fi
 #
 # NfsV3 logic for mount helper below
 #
-
-# Check if aznfswatchdog service is running.
-if ! ensure_aznfswatchdog; then
-    exit 1
-fi
 
 # MOUNTMAP file must have been created by aznfswatchdog service.
 if [ ! -f "$MOUNTMAP" ]; then
